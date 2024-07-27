@@ -1,0 +1,455 @@
+openapi: "3.0.1"
+info:
+  title: manavesh-narendra
+  version: "v2"
+  description: "`POC Project`"
+  contact:
+    name: "Manavesh Narendra"
+    email: "manavesh.narendra@gmail.com"
+  license: 
+    name: "License"
+    url: "www.google.com"
+servers:
+  - url: https://development.custom-server.com/v1
+    description: "Development Server"
+  - url: https://stagingcustom-server.com/v1
+    description: "Staging Server"
+  - url: https://api.custom-server.com/v1
+    description: "Production Server"
+  - url: https://{username}.server.com:{port}/{version}
+    description: "Custom Server"
+    variables:
+      username:
+        default: "abc"
+        description: "This value is assigned by service provider"
+      port:
+        default: "8443"
+        enum: 
+          - "8443"
+          - "9443"
+          - "7443"
+      version:
+        default: "v1"
+
+security: 
+  - SecuritySchema1BasicAuth: []
+  - SecuritySchemaBearerAuth: []
+  - SecuritySchemaApiKey: []
+
+tags:
+  - name: "Categories"
+    description: "Categories related endpoints"
+  - name: "Orders"
+    description: "Orders related endpoints"
+  - name: "Products"
+    description: "Products related endpoints"
+paths:
+
+  /categories:
+    get:
+      operationId: "getAllCategories"
+      tags:
+        - "Categories"
+      summary: "Get the list of categories"
+      description: "To get list of all categories"
+      security: 
+        - SecuritySchemaBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/categoryIdQueryParam"
+      responses:
+        "200":
+          description: "List of categories"
+          content: 
+            application/json: 
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    categoryId:
+                      type: integer
+                    name:
+                      type: string
+              examples:
+                multiple-categories-data:
+                  value:
+                  - categoryId: 123
+                    name: "Laptop"
+                  - categoryId: 456
+                    name: "Mixer"
+                single-category-data:
+                  value:
+                  - categoryId: 123
+                    name: "Laptop"
+        "401":
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema: 
+                type: object
+                properties: 
+                  traceId:
+                    type: string
+                  message:
+                    type: string
+        "500":
+          description: "Internal Server Error"
+          content: 
+            application/json:
+              schema: 
+                type: object
+                properties: 
+                  traceId:
+                    type: string
+                  message:
+                    type: string
+  /categories/{categoryId}:
+    get:
+      operationId: "getCategoryById"
+      tags:
+        - "Categories"
+      summary: "Get a category by Id"
+      description: "Get a category by Id"
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/categoryIdQueryParam"
+      responses: 
+        "200":
+          description: "Category details"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+
+  /products:
+    get:
+      tags:
+        - "Products"
+      summary: "Get list of all the products"
+      description: "Get list of all the products"
+      parameters: 
+        - $ref: "#/components/parameters/categoryIdQueryParam"
+      responses:
+        "200":
+          description: "List of all the products"
+          content:
+            application/json: 
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    productId:
+                      type: integer
+                    name:
+                      type: string
+                    price:
+                      type: integer
+                    categoryName:
+                      type: string
+                    quantity:
+                      type: integer 
+
+  /products/{productId}:
+    get:
+      summary: "Get a product by id"
+      description: "Get a product by id"
+      tags:
+        - "Products"
+      parameters: 
+        - name: "productId"
+          in: path
+          schema: 
+            type: integer
+            minimum: 201
+            maximum: 999
+          example: 567
+          required: true
+      responses:
+        "200":
+          description: "Get a product by id"
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                    productId:
+                      type: integer
+                    name:
+                      type: string
+                    price:
+                      type: integer
+                    categoryName:
+                      type: string
+                    quantity:
+                      type: integer 
+  /oneOfOrder:
+    post:
+      tags:
+        - "Orders"
+      summary: "Create an order"
+      description: "Create an order"
+      requestBody: 
+        content:
+          application/json: 
+            schema:
+              type: object
+              properties:
+                products:
+                  type: object
+                  oneOf:
+                    - $ref: '#/components/schemas/Mobile'
+                    - $ref: '#/components/schemas/Laptop'
+      responses: 
+        "200":
+          description: "Created Successfully!"
+
+  /orders:
+    delete:
+      tags:
+        - "Orders"
+      summary: "Delete an order"
+      description: "Delete an order"
+      parameters:
+        - name: orderId
+          required: true
+          in: query
+          schema:
+            type: integer
+            minimum: 201
+            maximum: 9999
+          example: 567
+      responses:
+        "204":
+          description: "Deleted"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId: 
+                    type: string
+                  deletedAt:
+                    type: string
+
+
+    post:
+      operationId: "createOrder"
+      summary: "Create orders"
+      description: "Create orders for products"
+      tags:
+        - "Orders"
+      requestBody:
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Products'
+                  address:
+                    $ref: "#/components/schemas/Address"
+              examples:
+                order-payload:
+                  value:
+                    products:
+                      - productId: 123
+                        name: "Acer aspire 7"
+                        price: 1299.00
+                        categoryName: "Laptop"
+                        quantity: 63
+                      - productId: 456
+                        name: "Bajaj Mixer 45W"
+                        price: 788.00
+                        categoryName: "Mixer"
+                        quantity: 34
+                    address:
+                      addressLine: "Sinha House, New Damariya"
+                      city: "Patna"
+                      state: "Bihar"
+                      zipcode: "800002"
+                     
+      responses: 
+        "201":
+          description: "Created"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderedAt:
+                    type: string
+                  orderId:
+                    type: string
+          links: 
+            getOrderById:
+              description: "The orderId generated by the response can be used by `/orders/{ordersId}` to get a particular order details"
+              operationId: getOrderById
+              parameters:
+                orderId: $response.body#/orderId
+    patch:
+      tags:
+        - "Orders"
+      summary: "Update orders"
+      description: "Update orders for products"
+      requestBody:
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Products'
+                  address:
+                    $ref: "#/components/schemas/Address"
+      responses: 
+        "200":
+          description: "Updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ordereUpdatedAt:
+                    type: string
+                  orderId:
+                    type: string
+
+
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - "Orders"
+      summary: "Get order details using orderId"
+      description: "Get order details using orderId"
+      operationId: "getOrderById"
+      parameters:
+        - in: path
+          name: orderId
+          schema:
+            type: integer
+          required: true
+          example: 456
+      responses:
+        "200":
+          description: "Successful"
+          content:
+            application/json: 
+              schema:
+                type: object
+                $ref: "#/components/schemas/Products"
+
+components:
+  securitySchemes: 
+    SecuritySchema1BasicAuth:
+      scheme: basic
+      type: http
+    SecuritySchemaBearerAuth:
+      scheme: bearer
+      type: http
+      bearerFormat: JWT  
+    SecuritySchemaApiKey:
+      scheme: http
+      type: apiKey
+      in: query
+      name: X-API-KEY
+  parameters: 
+    orderIdQueryParam:
+      name: "productId"
+      in: path
+      schema: 
+        type: integer
+        minimum: 201
+        maximum: 999
+      example: 567
+      required: true
+    categoryIdQueryParam:
+      name: "categoryId"
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 201
+        maximum: 9999
+      examples:
+        example1:
+          value: 123
+        example2:
+          value: 345
+  schemas:
+    Address:
+      type: object
+      properties:
+        addressLine:
+          type: string 
+        city:
+          type: string 
+        state:
+          type: string 
+        zipcode:
+          type: string 
+    Products:
+      type: object
+      properties:
+        productId:
+          type: integer
+        name:
+          type: string
+        price:
+          type: integer
+        categoryName:
+          type: string
+        quantity:
+          type: integer
+    Mobile:
+      allOf:
+        - $ref: "#/components/schemas/Products"
+        - type: object
+          properties:
+            networkType:
+              type: string
+              enum:
+                - "4G"
+                - "5G"
+    Laptop:
+      allOf:
+        - $ref: "#/components/schemas/Products"
+        - type: object
+          properties:
+            ram:
+              type: string
+              enum:
+                - "8 Gi"
+                - "16 Gi"
+                - "32 Gi"
+
+      
+
+
+
+
+
+                    
+                     
+
+
+                      
+    
+
+
+
+
+
+
+
+
